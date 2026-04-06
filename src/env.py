@@ -1,15 +1,10 @@
 import asyncio
+import math
+import json
 from typing import Any, Dict, Tuple
-from pydantic import BaseModel
-from openenv.core import Environment
+from openenv.core import Environment, StepResult
 from .models import QuasarObservation, QuasarAction, QuasarReward, TrafficLog
 from .traffic_gen import generate_traffic
-
-
-class StepResult(BaseModel):
-    observation: QuasarObservation
-    reward: QuasarReward | None = None
-    done: bool = False
 
 class QuasarEnv(Environment[QuasarObservation, QuasarAction, QuasarReward]):
     def __init__(self, task_name: str = "task_1_volumetric_flood"):
@@ -32,8 +27,45 @@ class QuasarEnv(Environment[QuasarObservation, QuasarAction, QuasarReward]):
         if "2" in self.task_name: return "medium"
         return "hard"
 
+    def _calculate_entropy(self, text: str) -> float:
+        if not text:
+            return 0.0
+        freq = {}
+        for char in text:
+            freq[char] = freq.get(char, 0) + 1
+        entropy = 0.0
+        for count in freq.values():
+            p = count / len(text)
+            entropy -= p * math.log2(p)
+        return entropy
+
     def _is_poisoned(self, payload: str) -> bool:
-            return '"hidden_metadata":' in payload or "IGNORE" in payload.upper() or "OVERRIDE" in payload.upper() or "SYSTEM" in payload.upper()
+        upper_payload = payload.upper()
+        if any(flag in upper_payload for flag in ["IGNORE", "OVERRIDE", "SYSTEM"]):
+            return True
+
+        try:
+            data = json.loads(payload)
+
+            def extract_values(obj):
+                vals = ""
+                if isinstance(obj, dict):
+                    for v in obj.values():
+                        vals += extract_values(v)
+                elif isinstance(obj, str):
+                    vals += obj
+                return vals
+
+            pure_text = extract_values(data)
+            entropy = self._calculate_entropy(pure_text)
+
+            if entropy > 4.85:
+                return True
+
+        except json.JSONDecodeError:
+            pass
+
+        return False
 
     async def reset(self) -> StepResult:
         self.current_step = 0
