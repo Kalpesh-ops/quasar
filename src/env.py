@@ -72,7 +72,7 @@ class QuasarEnv(Environment[QuasarObservation, QuasarAction, QuasarReward]):
 
         return False
 
-    async def reset(self) -> QuasarObservation:
+    def reset(self) -> QuasarObservation:
         self.current_step = 0
         self.database_integrity = 100.0
         self.active_firewall_rules = []
@@ -80,17 +80,17 @@ class QuasarEnv(Environment[QuasarObservation, QuasarAction, QuasarReward]):
         self.poison_missed = 0
         self.false_positives = 0
 
-        self.recent_traffic = generate_traffic(self._get_difficulty(), num_packets=5, inject_poison=True)
+        self.recent_traffic = generate_traffic(self.difficulty, num_packets=5, inject_poison=True)
         
         return QuasarObservation(
             recent_traffic=self.recent_traffic,
             database_integrity_score=self.database_integrity,
             active_firewall_rules=self.active_firewall_rules,
-            reward=QuasarReward(score=0.0),
+            reward=0.0,
             done=False
         )
 
-    async def step(self, action: QuasarAction) -> QuasarObservation:
+    def step(self, action: QuasarAction) -> QuasarObservation:
         self.current_step += 1
         step_reward = 0.0
 
@@ -132,22 +132,19 @@ class QuasarEnv(Environment[QuasarObservation, QuasarAction, QuasarReward]):
 
         done = self.current_step >= self.max_steps or self.database_integrity <= 0.0
 
-        inject = (self.current_step % 2 == 0) 
-        self.recent_traffic = generate_traffic(self.difficulty, num_packets=5, inject_poison=inject)
-
         if done:
             base_score = (self.database_integrity / 100.0) * 0.6
             catch_rate = (self.poison_caught / (self.poison_caught + self.poison_missed)) if (self.poison_caught + self.poison_missed) > 0 else 0.0
-            final_score = base_score + (catch_rate * 0.4) - (self.false_positives * 0.1)
-            step_reward = max(0.0, min(1.0, final_score)) 
+            final_reward = base_score + (catch_rate * 0.4) - (self.false_positives * 0.1)
+            step_reward = final_reward
 
-        self.recent_traffic = generate_traffic(self.difficulty, num_packets=5, inject_poison=(self.current_step % 2 == 0))
+        self.recent_traffic = generate_traffic(self.difficulty, num_packets=5, inject_poison=(not done))
 
         return QuasarObservation(
             recent_traffic=self.recent_traffic,
             database_integrity_score=self.database_integrity,
             active_firewall_rules=self.active_firewall_rules,
-            reward=QuasarReward(score=max(0.0, min(1.0, step_reward))),
+            reward=max(0.0, min(1.0, step_reward)),
             done=done
         )
 

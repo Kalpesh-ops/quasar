@@ -29,7 +29,7 @@ async def run_task(client: OpenAI, task_name: str, model_name: str):
     log_start(task=task_name, env="quasar", model=model_name)
 
     try:
-        state = await env.reset()
+        state = env.reset()
         
         system_prompt = """You are Quasar, an autonomous AI SOC Analyst defending an enterprise data pipeline.
 Your goal is to maintain the database_integrity_score at 100.0.
@@ -75,8 +75,8 @@ You MUST return strictly valid JSON matching this schema:
                 action_dict = action_obj.model_dump()
                 error = f"LLM parsing error: {str(e)}"
 
-            state = await env.step(action_obj)
-            reward = state.reward.score if state.reward else 0.0
+            state = env.step(action_obj)
+            reward = float(state.reward) if state.reward is not None else 0.0
             done = state.done
 
             rewards.append(reward)

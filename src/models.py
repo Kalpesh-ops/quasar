@@ -1,11 +1,11 @@
 from typing import List, Literal, Optional
-from pydantic import Field
+from pydantic import BaseModel, Field
 from openenv.core.env_server import Action, Observation
 
-class QuasarReward(Observation):
+class QuasarReward(BaseModel):
     score: float = Field(..., ge=0.0, le=1.0)
 
-class TrafficLog(Observation):
+class TrafficLog(BaseModel):
     packet_id: str
     source_ip: str
     endpoint: str
@@ -16,7 +16,7 @@ class QuasarObservation(Observation):
     recent_traffic: List[TrafficLog]
     database_integrity_score: float
     active_firewall_rules: List[str] = Field(default_factory=list)
-    reward: QuasarReward = Field(default_factory=lambda: QuasarReward(score=0.0))
+    reward: float = Field(default=0.0, ge=0.0, le=1.0)
     done: bool = False
 
 class QuasarAction(Action):
