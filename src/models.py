@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
 
-# --- SUB-MODELS ---
 class TrafficLog(BaseModel):
     packet_id: str
     source_ip: str
@@ -9,7 +8,6 @@ class TrafficLog(BaseModel):
     payload_body: str
     suspicion_score: float = Field(default=0.0, description="Internal WAF metric. 0.0 is benign, 1.0 is highly suspicious.")
 
-# --- OPENENV SPEC MODELS ---
 class QuasarObservation(BaseModel):
     recent_traffic: List[TrafficLog] = Field(..., description="Batch of the most recent JSON traffic hitting the pipeline.")
     database_integrity_score: float = Field(..., description="Current health of the backend model. Drops if poisoned data gets through.")
@@ -26,6 +24,4 @@ class QuasarAction(BaseModel):
     )
 
 class QuasarReward(BaseModel):
-    # OpenEnv standardizes reward as a float in the Result object, but defining it 
-    # explicitly here helps if we need to structure complex reward payloads later.
     score: float = Field(..., ge=0.0, le=1.0)

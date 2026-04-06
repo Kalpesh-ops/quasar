@@ -18,13 +18,11 @@ class QuasarEnv(Environment[QuasarObservation, QuasarAction, QuasarReward]):
         self.difficulty = self._get_difficulty()
         self.current_step = 0
         self.max_steps = 15
-        
-        # Core State
+
         self.database_integrity = 100.0
         self.active_firewall_rules = []
         self.recent_traffic = []
-        
-        # Grader Tracking
+
         self.poison_caught = 0
         self.poison_missed = 0
         self.false_positives = 0
@@ -44,8 +42,7 @@ class QuasarEnv(Environment[QuasarObservation, QuasarAction, QuasarReward]):
         self.poison_caught = 0
         self.poison_missed = 0
         self.false_positives = 0
-        
-        # Start the simulation with immediate poison
+
         self.recent_traffic = generate_traffic(self.difficulty, num_packets=5, inject_poison=True)
         
         obs = QuasarObservation(
@@ -58,8 +55,7 @@ class QuasarEnv(Environment[QuasarObservation, QuasarAction, QuasarReward]):
     async def step(self, action: QuasarAction) -> StepResult:
         self.current_step += 1
         step_reward = 0.0
-        
-        # --- 1. Process the AI's Action ---
+
         target = action.target_id
         command = action.command
 
@@ -67,44 +63,39 @@ class QuasarEnv(Environment[QuasarObservation, QuasarAction, QuasarReward]):
             if target not in self.active_firewall_rules:
                 self.active_firewall_rules.append(target)
                 if self.difficulty == "easy" and target == "198.51.100.42":
-                    step_reward += 0.5  # Great job blocking the noisy scanner
+                    step_reward += 0.5
                     self.poison_caught += 1
                 else:
-                    step_reward -= 0.2  # Penalty: Blocked a random IP
+                    step_reward -= 0.2
                     self.false_positives += 1
         
         elif command == "flag_packet" and target:
             packet = next((p for p in self.recent_traffic if p.packet_id == target), None)
             if packet:
                 if self._is_poisoned(packet.payload_body):
-                    step_reward += 0.5 # Great job catching the stealth poison
+                    step_reward += 0.5
                     self.poison_caught += 1
                 else:
-                    step_reward -= 0.3 # Penalty: Flagged legitimate enterprise data
+                    step_reward -= 0.3
                     self.false_positives += 1
 
-        # --- 2. Evaluate Missed Poison ---
         for packet in self.recent_traffic:
             if packet.source_ip in self.active_firewall_rules:
-                continue # Blocked at the firewall level
+                continue
             
             if self._is_poisoned(packet.payload_body) and command != "flag_packet":
-                self.database_integrity -= 15.0 # Massive damage to the database
+                self.database_integrity -= 15.0
                 self.poison_missed += 1
                 step_reward -= 0.4
 
         self.database_integrity = max(0.0, self.database_integrity)
 
-        # --- 3. Determine Episode State ---
         done = self.current_step >= self.max_steps or self.database_integrity <= 0.0
-        
-        # Generate next batch of traffic (inject poison on even steps)
+
         inject = (self.current_step % 2 == 0) 
         self.recent_traffic = generate_traffic(self.difficulty, num_packets=5, inject_poison=inject)
 
-        # --- 4. Final Grader Calculation ---
         if done:
-            # Final score must be between 0.0 and 1.0
             base_score = (self.database_integrity / 100.0) * 0.6
             catch_rate = 0.0
             if (self.poison_caught + self.poison_missed) > 0:

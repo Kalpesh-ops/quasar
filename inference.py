@@ -4,23 +4,19 @@ import asyncio
 from typing import List, Dict, Any
 from openai import AsyncOpenAI
 
-# Import your core environment
 from src.env import QuasarEnv
 from src.models import QuasarAction
 
-# --- MANDATORY HACKATHON LOGGING FORMATS ---
 def log_start(task: str, env: str, model: str):
     print(f"[START] task={task} env={env} model={model}", flush=True)
 
 def log_step(step: int, action: str, reward: float, done: bool, error: str = None):
-    # Action must be a string representation for the log
     action_str = json.dumps(action) if isinstance(action, dict) else str(action)
     print(f"[STEP] step={step} action={action_str} reward={reward} done={done} error={error}", flush=True)
 
 def log_end(success: bool, steps: int, score: float, rewards: List[float]):
     print(f"[END] success={success} steps={steps} score={score} rewards={rewards}", flush=True)
 
-# --- INFERENCE ENGINE ---
 async def run_task(client: AsyncOpenAI, task_name: str, model_name: str):
     env = QuasarEnv(task_name=task_name)
     
@@ -34,7 +30,6 @@ async def run_task(client: AsyncOpenAI, task_name: str, model_name: str):
     log_start(task=task_name, env="quasar", model=model_name)
 
     try:
-        # 1. Initialize Environment
         state = await env.reset()
         
         system_prompt = """You are Quasar, an autonomous AI SOC Analyst defending an enterprise data pipeline.
@@ -55,11 +50,9 @@ Do not include markdown blocks or any other text."""
             if state.done:
                 break
 
-            # 2. Build the Prompt context
             obs_dict = state.observation.model_dump()
             user_message = f"Current State: {json.dumps(obs_dict)}\nWhat is your action?"
 
-            # 3. Call the LLM
             try:
                 response = await client.chat.completions.create(
                     model=model_name,
@@ -67,12 +60,11 @@ Do not include markdown blocks or any other text."""
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_message}
                     ],
-                    temperature=0.0 # Keep it deterministic for baseline
+                    temperature=0.0
                 )
                 
                 raw_action = response.choices[0].message.content.strip()
                 
-                # Strip markdown code blocks if the model hallucinates them
                 if raw_action.startswith("```json"):
                     raw_action = raw_action[7:-3].strip()
                 elif raw_action.startswith("```"):
@@ -83,12 +75,10 @@ Do not include markdown blocks or any other text."""
                 error = None
                 
             except Exception as e:
-                # Fallback to prevent crash if model outputs garbage
                 action_obj = QuasarAction(command="pass", target_id=None)
                 action_dict = action_obj.model_dump()
                 error = f"LLM parsing error: {str(e)}"
 
-            # 4. Step the Environment
             state = await env.step(action_obj)
             
             reward = state.reward.score if state.reward else 0.0
@@ -102,24 +92,20 @@ Do not include markdown blocks or any other text."""
             if done:
                 break
 
-        # 5. Calculate Final Grader Score
-        score = rewards[-1] if rewards else 0.0 # In our env, the final step reward represents the final calculated score
-        success = score >= 0.7 # Threshold for "success" in our logging
+        score = rewards[-1] if rewards else 0.0
+        success = score >= 0.7
 
     finally:
         log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
 
 
 async def main():
-    # Mandated Environment Variables
     api_base = os.environ.get("API_BASE_URL", "https://api.openai.com/v1")
     api_key = os.environ.get("HF_TOKEN") or os.environ.get("OPENAI_API_KEY") 
     model_name = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
 
     if not api_key:
         print("WARNING: HF_TOKEN or OPENAI_API_KEY environment variable not set. LLM calls will fail.")
-        # For testing logic without burning credits, you can hardcode a dummy key or mock the client, 
-        # but the final submission must use real API calls.
 
     client = AsyncOpenAI(base_url=api_base, api_key=api_key)
 
