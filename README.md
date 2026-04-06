@@ -1,3 +1,14 @@
+---
+title: Quasar
+emoji: 🌌
+colorFrom: indigo
+colorTo: purple
+sdk: docker
+pinned: false
+tags:
+  - openenv
+---
+
 # Quasar: Autonomous Defense Against Adversarial Data Poisoning
 
 ![Quasar AI Defense](https://img.shields.io/badge/OpenEnv-Compliant-success) ![Task Complexity](https://img.shields.io/badge/Tasks-3_Tiers-blue)
