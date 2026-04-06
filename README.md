@@ -16,6 +16,12 @@ tags:
 
 ![OpenEnv-Compliant](https://img.shields.io/badge/OpenEnv-Compliant-success) ![Tasks](https://img.shields.io/badge/Tasks-3_Tiers-blue) ![Live Data](https://img.shields.io/badge/Live_Data-HF_Datasets-orange) ![Status](https://img.shields.io/badge/Status-Live-brightgreen)
 
+## 🌐 Live Demo & Repository
+* **Live Deployment (Hugging Face):** [https://huggingface.co/spaces/kalpeshparashar/quasar](https://huggingface.co/spaces/kalpeshparashar/quasar)
+* **Source Code (GitHub):** [https://github.com/Kalpesh-ops/quasar](https://github.com/Kalpesh-ops/quasar)
+
+---
+
 ## 🚨 The Real-World Problem
 As enterprise systems increasingly integrate Large Language Models (LLMs) and Continuous Learning pipelines, they become vulnerable to a silent threat: **Adversarial Data Poisoning and Prompt Injection**. 
 
