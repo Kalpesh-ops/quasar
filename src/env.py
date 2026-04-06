@@ -80,7 +80,7 @@ class QuasarEnv(Environment[QuasarObservation, QuasarAction, QuasarReward]):
         self.poison_missed = 0
         self.false_positives = 0
 
-        self.recent_traffic = generate_traffic(self.difficulty, num_packets=5, inject_poison=True)
+        self.recent_traffic = generate_traffic(self._get_difficulty(), num_packets=5, inject_poison=True)
         
         return QuasarObservation(
             recent_traffic=self.recent_traffic,
