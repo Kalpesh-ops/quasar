@@ -7,6 +7,9 @@ RUN pip install uv
 # Copy project files
 COPY . .
 
+# Force Python to recognize the /app directory as a module source
+ENV PYTHONPATH="/app"
+
 # Install the project globally in the container using uv
 RUN uv pip install --system .
 
