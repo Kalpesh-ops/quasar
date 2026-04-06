@@ -5,10 +5,8 @@ from openenv.core.env_server import create_app
 from src.env import QuasarEnv
 from src.models import QuasarAction, QuasarObservation
 
-# Initialize the OpenEnv FastAPI wrapper
 app = create_app(QuasarEnv, QuasarAction, QuasarObservation)
 
-# Add a root endpoint for human judges and HF health checks
 @app.get("/", response_class=HTMLResponse)
 async def root():
     return """
