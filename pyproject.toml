@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quasar"
+version = "0.1.0"
+description = "Autonomous SOC agent defending an enterprise continuous data pipeline."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "openenv-core>=0.1.0",
+    "pydantic>=2.0.0",
+    "openai>=1.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.20.0",
+    "datasets>=2.16.0"
+]
+
+[project.scripts]
+server = "server.app:main"
+
+[tool.uv.workspace]
+members = [
+    "test",
+]

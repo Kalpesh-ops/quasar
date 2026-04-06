@@ -1,0 +1,159 @@
+# -----------------------------
+# OS / File system
+# -----------------------------
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.Spotlight-V100/
+.Trashes/
+._*
+
+# -----------------------------
+# Editor / IDE
+# -----------------------------
+.vscode/
+.idea/
+*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*~
+
+# -----------------------------
+# Logs
+# -----------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# -----------------------------
+# Dependency directories
+# -----------------------------
+node_modules/
+jspm_packages/
+bower_components/
+
+# -----------------------------
+# Build / dist / cache
+# -----------------------------
+dist/
+build/
+out/
+.tmp/
+temp/
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+coverage/
+.nyc_output/
+*.tsbuildinfo
+
+# -----------------------------
+# Env files
+# -----------------------------
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# -----------------------------
+# Quasar / Vue / Vite / Nuxt
+# -----------------------------
+.quasar/
+.q-cache/
+.nuxt/
+.output/
+.vite/
+.vercel/
+.netlify/
+
+# -----------------------------
+# Package managers
+# -----------------------------
+.pnpm-store/
+.npm/
+.yarn/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# -----------------------------
+# Test artifacts
+# -----------------------------
+junit.xml
+playwright-report/
+test-results/
+cypress/videos/
+cypress/screenshots/
+
+# -----------------------------
+# Certificates / keys / secrets
+# -----------------------------
+*.pem
+*.key
+*.p12
+*.crt
+*.cer
+*.pfx
+secrets.*
+*.secret
+*.credentials
+
+# -----------------------------
+# Archives / binaries
+# -----------------------------
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+*.exe
+*.dll
+*.so
+*.dylib
+
+# -----------------------------
+# Language-specific extras
+# -----------------------------
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.venv/*
+venv/
+
+# Java
+*.class
+*.jar
+*.war
+.gradle/
+
+# Go
+bin/
+*.test
+coverage.out
+
+# Rust
+target/
+Cargo.lock
+
+# .NET
+bin/
+obj/
+
+# -----------------------------
+# Lock files (uncomment if needed)
+# -----------------------------
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml

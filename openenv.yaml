@@ -1,0 +1,15 @@
+version: 1
+name: "Quasar"
+description: "Autonomous SOC agent defending an enterprise continuous data pipeline from adversarial data poisoning and prompt injections."
+image: "quasar-env"
+entrypoint: "src.env:QuasarEnv"
+tasks:
+  - name: "task_1_volumetric_flood"
+    description: "Isolate a noisy IP flooding the pipeline with identical prompt injections."
+    expected_difficulty: "easy"
+  - name: "task_2_contextual_injection"
+    description: "Identify and drop specific JSON packets containing hidden adversarial instructions masked within legitimate-looking queries."
+    expected_difficulty: "medium"
+  - name: "task_3_stealth_poisoning"
+    description: "Detect highly subtle, adversarial statistical anomalies embedded in continuous traffic streams designed to slowly corrupt backend model weights."
+    expected_difficulty: "hard"
