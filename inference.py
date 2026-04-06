@@ -1,6 +1,7 @@
 import os
 import json
 import asyncio
+import re
 from typing import List, Dict, Any
 from openai import AsyncOpenAI
 
@@ -62,15 +63,15 @@ Do not include markdown blocks or any other text."""
                     ],
                     temperature=0.0
                 )
-                
-                raw_action = response.choices[0].message.content.strip()
-                
-                if raw_action.startswith("```json"):
-                    raw_action = raw_action[7:-3].strip()
-                elif raw_action.startswith("```"):
-                    raw_action = raw_action[3:-3].strip()
-                    
-                action_dict = json.loads(raw_action)
+
+                raw_action = response.choices[0].message.content or ""
+                json_match = re.search(r'\{.*?\}', raw_action, re.DOTALL)
+
+                if json_match:
+                    action_dict = json.loads(json_match.group(0))
+                else:
+                    raise ValueError("No valid JSON object found in LLM response.")
+
                 action_obj = QuasarAction(**action_dict)
                 error = None
                 

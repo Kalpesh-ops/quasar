@@ -78,6 +78,8 @@ class QuasarEnv(Environment[QuasarObservation, QuasarAction, QuasarReward]):
                 else:
                     step_reward -= 0.3
                     self.false_positives += 1
+            else:
+                step_reward -= 0.1
 
         for packet in self.recent_traffic:
             if packet.source_ip in self.active_firewall_rules:
