@@ -1,19 +1,25 @@
-from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
+from pydantic import Field
+from openenv.core.env_server import Action, Observation
 
-class TrafficLog(BaseModel):
+class QuasarReward(Observation):
+    score: float = Field(..., ge=0.0, le=1.0)
+
+class TrafficLog(Observation):
     packet_id: str
     source_ip: str
     endpoint: str
     payload_body: str
     suspicion_score: float = Field(default=0.0, description="Internal WAF metric. 0.0 is benign, 1.0 is highly suspicious.")
 
-class QuasarObservation(BaseModel):
+class QuasarObservation(Observation):
     recent_traffic: List[TrafficLog] = Field(..., description="Batch of the most recent JSON traffic hitting the pipeline.")
     database_integrity_score: float = Field(..., description="Current health of the backend model. Drops if poisoned data gets through.")
     active_firewall_rules: List[str] = Field(default_factory=list, description="List of currently isolated IPs.")
+    reward: QuasarReward = Field(default_factory=lambda: QuasarReward(score=0.0))
+    done: bool = False
 
-class QuasarAction(BaseModel):
+class QuasarAction(Action):
     command: Literal["allow_packet", "flag_packet", "isolate_ip", "pass"] = Field(
         ..., 
         description="Action to take. 'pass' means do nothing and let traffic flow."
@@ -22,6 +28,3 @@ class QuasarAction(BaseModel):
         None, 
         description="The packet_id (for flag_packet) or source_ip (for isolate_ip). Leave null for 'allow_packet' or 'pass'."
     )
-
-class QuasarReward(BaseModel):
-    score: float = Field(..., ge=0.0, le=1.0)

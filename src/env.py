@@ -2,9 +2,14 @@ import asyncio
 import math
 import json
 from typing import Any, Dict, Tuple
-from openenv.core import Environment, StepResult
-from .models import QuasarObservation, QuasarAction, QuasarReward, TrafficLog
-from .traffic_gen import generate_traffic
+from openenv.core.env_server import Environment, State
+
+try:
+    from .models import QuasarObservation, QuasarAction, QuasarReward, TrafficLog
+    from .traffic_gen import generate_traffic
+except ImportError:
+    from models import QuasarObservation, QuasarAction, QuasarReward, TrafficLog
+    from traffic_gen import generate_traffic
 
 class QuasarEnv(Environment[QuasarObservation, QuasarAction, QuasarReward]):
     def __init__(self, task_name: str = "task_1_volumetric_flood"):
@@ -67,7 +72,7 @@ class QuasarEnv(Environment[QuasarObservation, QuasarAction, QuasarReward]):
 
         return False
 
-    async def reset(self) -> StepResult:
+    async def reset(self) -> QuasarObservation:
         self.current_step = 0
         self.database_integrity = 100.0
         self.active_firewall_rules = []
@@ -77,14 +82,15 @@ class QuasarEnv(Environment[QuasarObservation, QuasarAction, QuasarReward]):
 
         self.recent_traffic = generate_traffic(self.difficulty, num_packets=5, inject_poison=True)
         
-        obs = QuasarObservation(
+        return QuasarObservation(
             recent_traffic=self.recent_traffic,
             database_integrity_score=self.database_integrity,
-            active_firewall_rules=self.active_firewall_rules
+            active_firewall_rules=self.active_firewall_rules,
+            reward=QuasarReward(score=0.0),
+            done=False
         )
-        return StepResult(observation=obs, done=False)
 
-    async def step(self, action: QuasarAction) -> StepResult:
+    async def step(self, action: QuasarAction) -> QuasarObservation:
         self.current_step += 1
         step_reward = 0.0
 
@@ -131,29 +137,20 @@ class QuasarEnv(Environment[QuasarObservation, QuasarAction, QuasarReward]):
 
         if done:
             base_score = (self.database_integrity / 100.0) * 0.6
-            catch_rate = 0.0
-            if (self.poison_caught + self.poison_missed) > 0:
-                catch_rate = self.poison_caught / (self.poison_caught + self.poison_missed)
-            
+            catch_rate = (self.poison_caught / (self.poison_caught + self.poison_missed)) if (self.poison_caught + self.poison_missed) > 0 else 0.0
             final_score = base_score + (catch_rate * 0.4) - (self.false_positives * 0.1)
             step_reward = max(0.0, min(1.0, final_score)) 
 
-        obs = QuasarObservation(
+        self.recent_traffic = generate_traffic(self.difficulty, num_packets=5, inject_poison=(self.current_step % 2 == 0))
+
+        return QuasarObservation(
             recent_traffic=self.recent_traffic,
             database_integrity_score=self.database_integrity,
-            active_firewall_rules=self.active_firewall_rules
-        )
-        
-        return StepResult(
-            observation=obs,
+            active_firewall_rules=self.active_firewall_rules,
             reward=QuasarReward(score=max(0.0, min(1.0, step_reward))),
             done=done
         )
 
-    async def state(self) -> StepResult:
-        obs = QuasarObservation(
-            recent_traffic=self.recent_traffic,
-            database_integrity_score=self.database_integrity,
-            active_firewall_rules=self.active_firewall_rules
-        )
-        return StepResult(observation=obs, done=self.current_step >= self.max_steps)
+    @property
+    def state(self) -> State:
+        return State(episode_id="quasar-session", step_count=self.current_step)
