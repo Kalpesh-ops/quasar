@@ -2,6 +2,7 @@ import os
 import json
 import asyncio
 import re
+import inspect
 from typing import List, Dict, Any
 from openai import OpenAI
 
@@ -30,6 +31,8 @@ async def run_task(client: OpenAI, task_name: str, model_name: str):
 
     try:
         state = env.reset()
+        if inspect.isawaitable(state):
+            state = await state
         
         system_prompt = """You are Quasar, an autonomous AI SOC Analyst defending an enterprise data pipeline.
 Your goal is to maintain the database_integrity_score at 100.0.
@@ -47,7 +50,7 @@ You MUST return strictly valid JSON matching this schema:
         for step in range(1, max_steps + 1):
             if state.done: break
 
-            obs_dict = state.observation.model_dump()
+            obs_dict = state.model_dump()
             user_message = f"Current State: {json.dumps(obs_dict)}\nWhat is your action?"
 
             try:
@@ -76,7 +79,16 @@ You MUST return strictly valid JSON matching this schema:
                 error = f"LLM parsing error: {str(e)}"
 
             state = env.step(action_obj)
-            reward = float(state.reward) if state.reward is not None else 0.0
+            if inspect.isawaitable(state):
+                state = await state
+
+            reward_raw = state.reward
+            if reward_raw is None:
+                reward = 0.0
+            elif hasattr(reward_raw, "score"):
+                reward = float(reward_raw.score)
+            else:
+                reward = float(reward_raw)
             done = state.done
 
             rewards.append(reward)
